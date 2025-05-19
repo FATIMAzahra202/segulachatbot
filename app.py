@@ -6,17 +6,17 @@ from datetime import datetime
 import pandas as pd
 from ai_gemini import ask_gemini
 
-# Charger les variables d’environnement
+# Charger variables d’environnement
 load_dotenv()
 
-# Configurer la page
+# Configuration page
 st.set_page_config(page_title="Chat RH SEGULA", layout="centered")
 
-# Initialiser session_state
+# Initialiser session
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Fonction pour afficher le logo
+# 🔹 Logo
 def show_logo(image_path):
     with open(image_path, "rb") as image_file:
         encoded = base64.b64encode(image_file.read()).decode()
@@ -26,7 +26,7 @@ def show_logo(image_path):
             </div>
         """, unsafe_allow_html=True)
 
-# Sauvegarder l'historique dans un fichier Excel
+# 🔹 Sauvegarde Excel
 def save_to_excel(messages):
     data = [
         {"Rôle": m["role"], "Message": m["content"], "Date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
@@ -35,17 +35,28 @@ def save_to_excel(messages):
     df = pd.DataFrame(data)
     df.to_excel("chat_log.xlsx", index=False)
 
-# Bouton pour télécharger le fichier Excel
+# 🔹 Télécharger Excel
 def download_excel_button():
     if os.path.exists("chat_log.xlsx"):
         with open("chat_log.xlsx", "rb") as f:
             st.download_button("📥 Télécharger l'historique", f, file_name="chat_log.xlsx")
 
-# Choix de la langue
-lang = st.sidebar.selectbox("🌐 Langue / Language", ["Français", "English"])
-st.session_state.lang = lang  # pour l'utiliser dans toute l’app
+# 🔹 FAQ locale
+base_faq_fr = {
+    "quels sont les horaires de travail": "Les horaires standards sont de 9h à 17h du lundi au vendredi.",
+    "comment poser un congé": "Vous devez faire la demande via l’intranet RH ou contacter votre manager.",
+    "quels sont les avantages sociaux": "SEGULA offre mutuelle, transport, tickets resto, etc."
+}
+base_faq_en = {
+    "what are the working hours": "Standard hours are 9 AM to 5 PM, Monday to Friday.",
+    "how to request a leave": "You must submit the request via the HR intranet or contact your manager.",
+    "what are the social benefits": "SEGULA offers health insurance, transportation, meal vouchers, etc."
+}
 
-# Interface multilingue
+# 🔸 Langue
+lang = st.sidebar.selectbox("🌐 Langue / Language", ["Français", "English"])
+st.session_state.lang = lang
+
 if lang == "Français":
     show_logo("SEGULA_Technologies_logo_DB.jpg")
     st.markdown("<h2 style='text-align:center;color:#1e88e5;'>🤖 Chatbot RH SEGULA Technologies</h2>", unsafe_allow_html=True)
@@ -53,6 +64,7 @@ if lang == "Français":
     label_user = "👩‍💼 Vous"
     label_bot = "🤖 Bot"
     clear_btn = "🗑️ Vider la conversation"
+    faq = base_faq_fr
 else:
     show_logo("SEGULA_Technologies_logo_DB.jpg")
     st.markdown("<h2 style='text-align:center;color:#1e88e5;'>🤖 SEGULA HR Chatbot</h2>", unsafe_allow_html=True)
@@ -60,15 +72,16 @@ else:
     label_user = "👩‍💼 You"
     label_bot = "🤖 Bot"
     clear_btn = "🗑️ Clear conversation"
+    faq = base_faq_en
 
-# Bouton pour vider la session
+# 🧹 Vider la session
 if st.button(clear_btn):
     st.session_state.messages = []
     if os.path.exists("chat_log.xlsx"):
         os.remove("chat_log.xlsx")
     st.rerun()
 
-# Affichage des messages
+# 💬 Affichage historique
 with st.container():
     for msg in st.session_state.messages:
         align = "margin-left:auto;" if msg["role"] == "user" else "margin-right:auto;"
@@ -82,27 +95,32 @@ with st.container():
             </div>
         """, unsafe_allow_html=True)
 
-# Formulaire d'envoi
+# 📝 Formulaire de message
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("", placeholder=input_placeholder)
     submitted = st.form_submit_button("Envoyer")
 
-# Traitement du message
+# 🤖 Traitement
 if submitted and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    try:
-        response = ask_gemini(user_input)
-    except Exception as e:
-        response = "❌ Une erreur est survenue avec Gemini." if lang == "Français" else "❌ An error occurred with Gemini."
+    clean_input = user_input.lower().strip("?!.,")
+
+    if clean_input in faq:
+        response = faq[clean_input]
+    else:
+        try:
+            response = ask_gemini(user_input)
+        except Exception as e:
+            response = "❌ Une erreur est survenue avec Gemini." if lang == "Français" else "❌ An error occurred with Gemini."
 
     st.session_state.messages.append({"role": "bot", "content": response})
     save_to_excel(st.session_state.messages)
     st.rerun()
 
-# Bouton téléchargement Excel
+# 📥 Téléchargement historique
 download_excel_button()
 
-# Scroll automatique vers le bas
+# 🔽 Scroll automatique
 st.markdown("""
     <script>
         var chatDiv = window.parent.document.querySelector('.main');
