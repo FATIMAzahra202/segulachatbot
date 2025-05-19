@@ -4,19 +4,20 @@ import base64
 import os
 from datetime import datetime
 import pandas as pd
+import re
 from ai_gemini import ask_gemini
 
-# Charger variables d’environnement
+# Charger les variables d’environnement
 load_dotenv()
 
-# Configuration page
+# Configuration de la page
 st.set_page_config(page_title="Chat RH SEGULA", layout="centered")
 
-# Initialiser session
+# Initialisation de la session
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 🔹 Logo
+# Logo SEGULA
 def show_logo(image_path):
     with open(image_path, "rb") as image_file:
         encoded = base64.b64encode(image_file.read()).decode()
@@ -26,7 +27,7 @@ def show_logo(image_path):
             </div>
         """, unsafe_allow_html=True)
 
-# 🔹 Sauvegarde Excel
+# Sauvegarder l'historique
 def save_to_excel(messages):
     data = [
         {"Rôle": m["role"], "Message": m["content"], "Date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
@@ -35,13 +36,17 @@ def save_to_excel(messages):
     df = pd.DataFrame(data)
     df.to_excel("chat_log.xlsx", index=False)
 
-# 🔹 Télécharger Excel
+# Bouton de téléchargement
 def download_excel_button():
     if os.path.exists("chat_log.xlsx"):
         with open("chat_log.xlsx", "rb") as f:
             st.download_button("📥 Télécharger l'historique", f, file_name="chat_log.xlsx")
 
-# 🔹 FAQ locale
+# Nettoyage intelligent des questions
+def normalize(text):
+    return re.sub(r"[^\w\s]", "", text.lower().strip())
+
+# FAQ locale
 base_faq_fr = {
     "quels sont les horaires de travail": "Les horaires standards sont de 9h à 17h du lundi au vendredi.",
     "comment poser un congé": "Vous devez faire la demande via l’intranet RH ou contacter votre manager.",
@@ -53,13 +58,14 @@ base_faq_en = {
     "what are the social benefits": "SEGULA offers health insurance, transportation, meal vouchers, etc."
 }
 
-# 🔸 Langue
+# Langue
 lang = st.sidebar.selectbox("🌐 Langue / Language", ["Français", "English"])
 st.session_state.lang = lang
 
+# Interface selon la langue
 if lang == "Français":
     show_logo("SEGULA_Technologies_logo_DB.jpg")
-    st.markdown("<h2 style='text-align:center;color:#1e88e5;'>🤖 Chatbot RH SEGULA Technologies</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#1e88e5;'>🤖 Chatbot RH SEGULA Technologies</h2>", unsafe_allow_html=True)
     input_placeholder = "Tapez votre message ici..."
     label_user = "👩‍💼 Vous"
     label_bot = "🤖 Bot"
@@ -67,21 +73,21 @@ if lang == "Français":
     faq = base_faq_fr
 else:
     show_logo("SEGULA_Technologies_logo_DB.jpg")
-    st.markdown("<h2 style='text-align:center;color:#1e88e5;'>🤖 SEGULA HR Chatbot</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#1e88e5;'>🤖 SEGULA HR Chatbot</h2>", unsafe_allow_html=True)
     input_placeholder = "Type your message here..."
     label_user = "👩‍💼 You"
     label_bot = "🤖 Bot"
     clear_btn = "🗑️ Clear conversation"
     faq = base_faq_en
 
-# 🧹 Vider la session
+# Vider la conversation
 if st.button(clear_btn):
     st.session_state.messages = []
     if os.path.exists("chat_log.xlsx"):
         os.remove("chat_log.xlsx")
     st.rerun()
 
-# 💬 Affichage historique
+# Affichage des messages
 with st.container():
     for msg in st.session_state.messages:
         align = "margin-left:auto;" if msg["role"] == "user" else "margin-right:auto;"
@@ -89,38 +95,46 @@ with st.container():
         color = "#fff" if msg["role"] == "user" else "#000"
         label = label_user if msg["role"] == "user" else label_bot
         st.markdown(f"""
-            <div style='background:{bg};color:{color};padding:10px 15px;
-                        border-radius:12px;margin:10px 0;max-width:75%;{align}'>
+            <div style='background:{bg}; color:{color}; padding:10px 15px;
+                        border-radius:12px; margin:10px 0; max-width:75%; {align}'>
                 {label}: {msg['content']}
             </div>
         """, unsafe_allow_html=True)
 
-# 📝 Formulaire de message
+# Formulaire d'entrée utilisateur
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("", placeholder=input_placeholder)
     submitted = st.form_submit_button("Envoyer")
 
-# 🤖 Traitement
+# Traitement du message
 if submitted and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
-    clean_input = user_input.lower().strip("?!.,")
+    clean_input = normalize(user_input)
 
-    if clean_input in faq:
-        response = faq[clean_input]
+    # Vérifie si la question est dans la FAQ
+    matched = None
+    for question in faq:
+        if normalize(question) == clean_input:
+            matched = faq[question]
+            break
+
+    # Réponse
+    if matched:
+        response = matched
     else:
         try:
             response = ask_gemini(user_input)
-        except Exception as e:
+        except Exception:
             response = "❌ Une erreur est survenue avec Gemini." if lang == "Français" else "❌ An error occurred with Gemini."
 
     st.session_state.messages.append({"role": "bot", "content": response})
     save_to_excel(st.session_state.messages)
     st.rerun()
 
-# 📥 Téléchargement historique
+# Téléchargement Excel
 download_excel_button()
 
-# 🔽 Scroll automatique
+# Scroll automatique vers le bas
 st.markdown("""
     <script>
         var chatDiv = window.parent.document.querySelector('.main');
