@@ -1,12 +1,12 @@
 import streamlit as st
 from dotenv import load_dotenv
-import base64
 import os
-from datetime import datetime
+import base64
 import pandas as pd
-import re
 import tempfile
 import fitz  # PyMuPDF
+from datetime import datetime
+import re
 from ai_gemini import ask_gemini
 
 load_dotenv()
@@ -24,17 +24,17 @@ base_faq_en = {
     "what are the social benefits": "SEGULA offers health insurance, transportation, meal vouchers, etc."
 }
 
-# States init
+# États init
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "doc_content" not in st.session_state:
     st.session_state.doc_content = ""
 
-# Langue
+# Sélection langue
 lang = st.sidebar.selectbox("🌐 Langue / Language", ["Français", "English"])
 faq = base_faq_fr if lang == "Français" else base_faq_en
 
-# UI texte
+# Textes UI
 if lang == "Français":
     title = "🤖 Chatbot RH SEGULA Technologies"
     input_placeholder = "Tapez votre message ici..."
@@ -51,18 +51,15 @@ else:
     upload_label = "📎 Upload a document (PDF or TXT)"
 
 # Logo
-def show_logo(img_path):
-    with open(img_path, "rb") as f:
+def show_logo(path):
+    with open(path, "rb") as f:
         encoded = base64.b64encode(f.read()).decode()
-    st.markdown(f"""
-    <div style='text-align:center; margin:10px 0;'>
-        <img src='data:image/jpeg;base64,{encoded}' style='width:180px;' />
-    </div>""", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center'><img src='data:image/png;base64,{encoded}' width='180'></div>", unsafe_allow_html=True)
 
 show_logo("SEGULA_Technologies_logo_DB.jpg")
 st.markdown(f"<h2 style='text-align:center; color:#1e88e5;'>{title}</h2>", unsafe_allow_html=True)
 
-# Vider conversation
+# Reset chat
 if st.button(clear_btn):
     st.session_state.messages = []
     st.session_state.doc_content = ""
@@ -70,22 +67,34 @@ if st.button(clear_btn):
         os.remove("chat_log.xlsx")
     st.rerun()
 
-# 📎 Upload Document (Document Question Answering)
+# Upload document sécurisé
 uploaded_file = st.file_uploader(upload_label, type=["pdf", "txt"])
 if uploaded_file:
-    ext = uploaded_file.name.split(".")[-1].lower()
-    if ext == "txt":
+    file_ext = uploaded_file.name.split(".")[-1].lower()
+    if file_ext == "txt":
         st.session_state.doc_content = uploaded_file.read().decode("utf-8")
-    elif ext == "pdf":
+        st.success(f"✅ Fichier TXT chargé : {uploaded_file.name}")
+    elif file_ext == "pdf":
         pdf_bytes = uploaded_file.read()
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            tmp.write(pdf_bytes)
-            with fitz.open(tmp.name) as doc:
-                st.session_state.doc_content = "".join([page.get_text() for page in doc])
-            os.unlink(tmp.name)
-    st.success("✅ Document chargé avec succès !")
+        if pdf_bytes:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(pdf_bytes)
+                tmp.flush()
+                try:
+                    with fitz.open(tmp.name) as doc:
+                        text = ""
+                        for page in doc:
+                            text += page.get_text()
+                        st.session_state.doc_content = text
+                        st.success(f"✅ Fichier PDF chargé : {uploaded_file.name}")
+                except Exception as e:
+                    st.error(f"❌ Erreur lors de la lecture du PDF : {e}")
+                finally:
+                    os.unlink(tmp.name)
+        else:
+            st.warning("⚠️ Le fichier PDF est vide ou invalide.")
 
-# Affichage messages
+# Affichage des messages
 for msg in st.session_state.messages:
     align = "margin-left:auto;" if msg["role"] == "user" else "margin-right:auto;"
     bg = "#1e88e5" if msg["role"] == "user" else "#f1f1f1"
@@ -98,11 +107,11 @@ for msg in st.session_state.messages:
         </div>
     """, unsafe_allow_html=True)
 
-# Nettoyage question
+# Normalisation
 def normalize(text):
     return re.sub(r"[^\w\s]", "", text.lower().strip())
 
-# 💬 Formulaire question
+# Formulaire
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("", placeholder=input_placeholder)
     submitted = st.form_submit_button("Envoyer")
@@ -111,19 +120,18 @@ if submitted and user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     clean_input = normalize(user_input)
 
-    # 1. réponse interne (FAQ)
+    # Priorité : base locale > document > Gemini
     matched = None
     for q in faq:
         if normalize(q) == clean_input:
             matched = faq[q]
             break
 
-    # 2. Document si chargé
     if matched:
         response = matched
     elif st.session_state.doc_content:
         prompt = f"""
-Tu es un assistant RH. Voici un document :
+Voici un document RH :
 
 \"\"\"
 {st.session_state.doc_content}
@@ -137,7 +145,7 @@ Réponds à cette question : {user_input}
 
     st.session_state.messages.append({"role": "bot", "content": response})
 
-    # Excel log
+    # Log Excel
     df = pd.DataFrame([
         {"Role": m["role"], "Message": m["content"], "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         for m in st.session_state.messages
@@ -145,12 +153,12 @@ Réponds à cette question : {user_input}
     df.to_excel("chat_log.xlsx", index=False)
     st.rerun()
 
-# 📥 Téléchargement Excel
+# Bouton téléchargement Excel
 if os.path.exists("chat_log.xlsx"):
     with open("chat_log.xlsx", "rb") as f:
         st.download_button("📥 Télécharger l'historique", f, file_name="chat_log.xlsx")
 
-# 🔽 Auto-scroll JS
+# Scroll auto JS
 st.markdown("""
 <script>
     var chatDiv = window.parent.document.querySelector('.main');
