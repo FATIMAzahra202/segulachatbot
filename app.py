@@ -80,7 +80,8 @@ if st.button(clear_btn):
     st.session_state.messages = []
     if os.path.exists("chat_log.xlsx"):
         os.remove("chat_log.xlsx")
-    st.experimental_rerun()
+    st.rerun()
+
 
 # 💬 Afficher messages
 with st.container():
@@ -128,7 +129,7 @@ if submitted and user_input:
 
     st.session_state.messages.append({"role": "bot", "content": response})
     save_to_excel(st.session_state.messages)
-    st.experimental_rerun()
+    st.rerun()
 
 # 📥 Télécharger historique
 download_excel_button()
