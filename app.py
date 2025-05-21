@@ -31,10 +31,52 @@ base_faq_fr = {
     "Auprès de quel service je peux me procurer les imprimés relatifs à la demande des indemnités journalières de ​​maternité ?​": "Où se procurer les imprimés ?En ligne : Télécharge le formulaire intitulé « Avis d’interruption de travail et demande d’indemnités journalières » directement sur le site officiel de la CNSS : www.cnss.maEn agence CNSS : Rends-toi à l’agence CNSS la plus proche pour obtenir une version papier du formulaire.",
 }
 base_faq_en = {
-    "what are the working hours": "Standard hours are 9 AM to 5 PM, Monday to Friday.",
-    "how to request a leave": "You must submit the request via the HR intranet or contact your manager.",
-    "what are the social benefits": "SEGULA offers health insurance, transportation, meal vouchers, etc."
+    "I just joined Segula, when can I take my paid leave?":
+        "At Segula Maroc, you can take your paid leave after 6 months of effective work. You start accruing it from your first day, at a rate of 1.5 working days per month, but you can use it after 6 months of seniority.",
+
+    "I just joined Segula, what are my rights to paid leave?":
+        "From your first day, you accrue 1.5 working days per month of actual work, about 18 working days per year. You can request them after 6 months of employment unless approved earlier by your manager.",
+
+    "How can I request paid leave?":
+        "You must submit your request via the HRMAPS platform, specifying the dates. The request must be made at least 7 days before the desired start date and approved by your manager.",
+
+    "As a manager, how do I process my team’s leave requests?":
+        "Once a collaborator submits a leave request via HRMAPS, you receive an automatic email notification. Log in to HRMAPS, access the 'Leaves' section, review the request (dates, balance, notes), and approve or deny it. Ensure business continuity before approving.",
+
+    "Can I carry over paid leave from one year to the next?":
+        "Yes, paid leave can be carried over for up to 2 years. After that period, unused days are lost unless exceptions apply.",
+
+    "I have a large leave balance, and my manager is pushing me to take leave. Why?":
+        "Managers encourage you to take leave for your well-being and to avoid losing unused days. According to Segula rules, paid leave is valid for up to 2 years. Beyond that, it is lost unless an exception is granted.",
+
+    "My paid leave was refused. Can I ask for unpaid leave instead?":
+        "Check your HRMAPS balance first. If sufficient, discuss with your manager to understand the reason. If not, contact the payroll team. If justified and approved, you can request unpaid leave.",
+
+    "How do I request unpaid leave?":
+        "Submit the request via HRMAPS and indicate clearly that it is an unpaid leave. Make your request at least 7 days before the start date. Approval by your manager is required.",
+
+    "How many days of paid leave am I entitled to per year?":
+        "If you’ve worked less than 2 years: 1.5 working days per month (≈18 per year). If 2 years or more: 2 days/month (≈24 per year). Check your real-time balance on HRMAPS.",
+
+    "I’m pregnant. What steps should I take with my employer?":
+        "Inform your employer in writing and provide a medical certificate. You are entitled to 14 weeks of maternity leave. HR will guide and support you through the process.",
+
+    "What do I need to do to benefit from maternity leave?":
+        "Notify your employer in writing as soon as possible with expected delivery date. Provide a certificate from your doctor. Declare your pregnancy to CNSS and coordinate with HR to plan your 14-week maternity leave.",
+
+    "How will I be paid during maternity leave?":
+        "You receive 100% of your average gross salary from CNSS (capped at 6,000 MAD/month). You must have at least 54 CNSS contribution days in the past 10 months and submit a complete file.",
+
+    "What are the eligibility conditions for maternity benefits?":
+        "You must have contributed at least 54 days to CNSS in the last 10 months and submit a complete file. CNSS pays 100% of your gross average salary, up to 6,000 MAD/month.",
+
+    "What documents are required to get maternity benefits?":
+        "Within 30 days of delivery, submit: pregnancy certificate, birth certificate, signed maternity leave statement, 6 pay slips, CNSS request form, and your bank RIB.",
+
+    "Where can I get the maternity benefit forms?":
+        "You can download them from www.cnss.ma or collect paper copies from the nearest CNSS office."
 }
+
 
 # États init
 if "messages" not in st.session_state:
