@@ -12,7 +12,7 @@ from ai_gemini import ask_gemini
 load_dotenv()
 st.set_page_config(page_title="Chat RH SEGULA", layout="centered")
 
-# FAQ locale
+
 base_faq_fr = {
     "je viens d'arriver chez Segula partir de quand puis-je prendre mes congés payés ?": "Chez Segula Maroc, tu peux prendre tes congés payés après 6 mois de travail effectif. Tu les acquiers progressivement dès ton arrivée, à raison de 1,5 jour ouvrable par mois, mais tu pourras les utiliser à partir de 6 mois d’ancienneté",
     "Je viens d'intégrer Segula quels sont mes droits en congés payés ?": "Chez Segula Maroc, tu commences à acquérir des jours de congé dès ton arrivée, à raison de 1,5 jour ouvrable par mois de travail effectif, soit environ 18 jours ouvrables par an. En revanche, tu pourras commencer à les poser après 6 mois de travail effectif, sauf cas exceptionnel validé par ta hiérarchie.",
@@ -30,6 +30,8 @@ base_faq_fr = {
     "​Quelles sont les pièces à fournir pour bénéficier des indemnités journalières de maternité ?": "Pour bénéficier des indemnités journalières de maternité versées par la CNSS, tu dois fournir un dossier complet dans un délai maximum de 30 jours à compter de la date de ton accouchement.Pièces à fournir :Certificat médical de grossesse, précisant la date présumée de l’accouchement, Acte d’accouchement (à fournir après la naissance), Attestation de congé maternité signée par l’employeur, indiquant les dates exactes du congé,Bulletins de paie des 6 derniers mois,Formulaire de demande d’indemnité de maternité (disponible sur www.cnss.ma ou dans une agence CNSS),Relevé d’identité bancaire (RIB) au nom de l’assurée.Délai à respecter : Le dossier doit être déposé dans les 30 jours suivant la date de l’accouchement.Un retard dans le dépôt peut entraîner le refus du remboursement.",
     "Auprès de quel service je peux me procurer les imprimés relatifs à la demande des indemnités journalières de ​​maternité ?​": "Où se procurer les imprimés ?En ligne : Télécharge le formulaire intitulé « Avis d’interruption de travail et demande d’indemnités journalières » directement sur le site officiel de la CNSS : www.cnss.maEn agence CNSS : Rends-toi à l’agence CNSS la plus proche pour obtenir une version papier du formulaire.",
 }
+
+
 base_faq_en = {
     "I just joined Segula, when can I take my paid leave?":
         "At Segula Maroc, you can take your paid leave after 6 months of effective work. You start accruing it from your first day, at a rate of 1.5 working days per month, but you can use it after 6 months of seniority.",
@@ -78,17 +80,17 @@ base_faq_en = {
 }
 
 
-# États init
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "doc_content" not in st.session_state:
     st.session_state.doc_content = ""
 
-# Sélection langue
+
 lang = st.sidebar.selectbox("🌐 Langue / Language", ["Français", "English"])
 faq = base_faq_fr if lang == "Français" else base_faq_en
 
-# Textes UI
+
 if lang == "Français":
     title = "🤖 Chatbot RH SEGULA Technologies"
     input_placeholder = "Tapez votre message ici..."
@@ -104,7 +106,7 @@ else:
     clear_btn = "🗑️ Clear conversation"
     upload_label = "📎 Upload a document (PDF or TXT)"
 
-# Logo
+
 def show_logo(path):
     with open(path, "rb") as f:
         encoded = base64.b64encode(f.read()).decode()
@@ -113,7 +115,7 @@ def show_logo(path):
 show_logo("SEGULA_Technologies_logo_DB.jpg")
 st.markdown(f"<h2 style='text-align:center; color:#1e88e5;'>{title}</h2>", unsafe_allow_html=True)
 
-# Reset chat
+
 if st.button(clear_btn):
     st.session_state.messages = []
     st.session_state.doc_content = ""
@@ -121,7 +123,7 @@ if st.button(clear_btn):
         os.remove("chat_log.xlsx")
     st.rerun()
 
-# Upload document sécurisé
+
 uploaded_file = st.file_uploader(upload_label, type=["pdf", "txt"])
 if uploaded_file:
     file_ext = uploaded_file.name.split(".")[-1].lower()
@@ -148,7 +150,7 @@ if uploaded_file:
         else:
             st.warning("⚠️ Le fichier PDF est vide ou invalide.")
 
-# Affichage des messages
+
 for msg in st.session_state.messages:
     align = "margin-left:auto;" if msg["role"] == "user" else "margin-right:auto;"
     bg = "#1e88e5" if msg["role"] == "user" else "#f1f1f1"
@@ -161,11 +163,11 @@ for msg in st.session_state.messages:
         </div>
     """, unsafe_allow_html=True)
 
-# Normalisation
+
 def normalize(text):
     return re.sub(r"[^\w\s]", "", text.lower().strip())
 
-# Formulaire
+
 with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("", placeholder=input_placeholder)
     submitted = st.form_submit_button("Envoyer")
@@ -199,7 +201,7 @@ Réponds à cette question : {user_input}
 
     st.session_state.messages.append({"role": "bot", "content": response})
 
-    # Log Excel
+    
     df = pd.DataFrame([
         {"Role": m["role"], "Message": m["content"], "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         for m in st.session_state.messages
@@ -207,12 +209,12 @@ Réponds à cette question : {user_input}
     df.to_excel("chat_log.xlsx", index=False)
     st.rerun()
 
-# Bouton téléchargement Excel
+
 if os.path.exists("chat_log.xlsx"):
     with open("chat_log.xlsx", "rb") as f:
         st.download_button("📥 Télécharger l'historique", f, file_name="chat_log.xlsx")
 
-# Scroll auto JS
+
 st.markdown("""
 <script>
     var chatDiv = window.parent.document.querySelector('.main');
